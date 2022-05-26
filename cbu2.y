@@ -20,7 +20,9 @@ typedef struct nodeType {
 } Node;
 
 #define YYSTYPE Node*
-
+int IfCnt=0;
+int ElseCnt=0;
+int IfElseCnt=0;
 int tsymbolcnt=0;
 int errorcnt=0;
 
@@ -40,6 +42,7 @@ void prtcode(int,Node*);
 void Input(char *);
 void genIfLabel();
 void genElseLabel();
+void genEndLabel();
 void	dwgen();
 int	gentemp();
 /*내가 생성한 함수*/
@@ -68,20 +71,27 @@ int	insertsym(char *);
 program	: START stmt_list END	{ if (errorcnt==0) { codegen($2); dwgen();} } //codegen은 node를 출력
 	;
 
-stmt_list: 	stmt_list stmt 	{$$=MakeListTree($1, $2);}
-		| stmt {$$=MakeListTree(NULL, $1);}
-		| error STMTEND	{ errorcnt++; yyerrok;}
-;
+stmt_list: Statement {$$=$1;}
+	;
 
-stmt:	ID ASSGN expr STMTEND	{$1->token=ID2; $$=MakeOPTree(ASSGN,$1,$3);}
-|	unmatched
-;
+Statement : ExpressionStatement 	{$$=MakeListTree(NULL, $1);}
+	| ExpressionStatement SelectionStatement {$$=MakeListTree($1,$2);}
+	| error STMTEND	{ errorcnt++; yyerrok;}
+	;
+			
+SelectionStatement:  unmatched {$$=$1;} ;	
 
-unmatched:	IF condition_stmt stmt {$$=MakeOPTree(IF,$2,$3);}
-|	IF_ELSE_ST condition_stmt stmt ELSE stmt { $$=MakeSTMTree(IF_ELSE_ST,$2,$3,$5); }
-;
+unmatched : IF condition_stmt stmt_list {$$=MakeOPTree(IF,$1,$2);}
+	| IF_ELSE_ST condition_stmt stmt_list ELSE stmt_list { $$=MakeSTMTree(IF_ELSE_ST,$2,$3,$5); }
+	 ;
 
-condition_stmt	: 	expr GT expr { $$=MakeOPTree(GT,$1,$3); genElseLabel();}
+ExpressionStatement: stmt ExpressionStatement {$$=MakeListTree($1, $2);} 
+	| stmt {$$=MakeListTree(NULL,$1);}
+	;
+stmt: ID ASSGN expr STMTEND	{$1->token=ID2; $$=MakeOPTree(ASSGN,$1,$3);} 
+	;
+
+condition_stmt	: 	expr GT expr { $$=MakeOPTree(GT,$1,$3); }
 |	expr GE expr {$$=MakeOPTree(GE,$1,$3); }
 |	expr LT expr {$$=MakeOPTree(LT,$1,$3); }
 |	expr LE expr {$$=MakeOPTree(LE,$1,$3); }
@@ -101,7 +111,6 @@ term	:	term MUL fact	{ $$=MakeOPTree(MUL, $1, $3); }
 fact	:	ID		{ /* ID node is created in lex */ }
 	|	NUM		{ /* NUM node is created in lex */ }
 	;
-
 
 %%
 int main(int argc, char *argv[]) 
@@ -149,7 +158,7 @@ Node * MakeOPTree(int op, Node* operand1, Node* operand2)
 
 
 Node * MakeSTMTree(int op, Node *operand1, Node *stmt,Node *stmt1){
-
+	
 	Node * newnode;
 
 	newnode = (Node *)malloc(sizeof(Node));
@@ -159,7 +168,7 @@ Node * MakeSTMTree(int op, Node *operand1, Node *stmt,Node *stmt1){
 	newnode->brother=NULL;
 	operand1->brother=stmt;
 	stmt->brother=stmt1;
-
+	
 	return newnode;
 }
 
@@ -173,12 +182,16 @@ Node * MakeNode(int token, int operand)
 	return newnode;
 }
 
+//void genEndLabel(){
+//	fprintf(fp,"LABEL END\n",ConCnt);
+//	ConCnt--;
+//}
 void genIfLabel(){
-	fprintf(fp,"LABEL IF\n");
+	fprintf(fp,"LABEL IF%d\n",IfCnt++);
 }
 
 void genElseLabel(){
-	fprintf(fp,"LABEL ELSE\n");
+	fprintf(fp,"LABEL ELSE%d\n",ElseCnt++);
 }
 Node * MakeListTree(Node* operand1, Node* operand2)
 {
@@ -247,13 +260,13 @@ void processOperator(int token,Node *ptr){
 				fprintf(fp,"-\n");
 			break;
 	}
+
 }
 
 
 void codegen(Node * root)
 {
 	DFSTree(root);
-	fprintf(fp,"LABEL OUT\n");
 
 }
 
@@ -283,8 +296,8 @@ void processCondition(int token,Node *ptr){
 				fprintf(fp,"PUSH %d\n",ptr->son->tokenval>symtbl[ptr->son->brother->tokenval]);
 			else
 				fprintf(fp,"PUSH %d\n",symtbl[ptr->son->tokenval]>symtbl[ptr->son->brother->tokenval]);
-			
-			genIfLabel(); //if label 미리 달기 
+			IfCnt++;
+			fprintf(fp,"GOFALSE ELSE%d\n",ElseCnt);
 			break;
 		case LT: //작다 오른쪽이 왼쪽보다 작다 -> 1
 
@@ -337,17 +350,9 @@ void processCondition(int token,Node *ptr){
 void processStatement(int token,Node *ptr){
 
 	switch(token){
-		case IF:
-			processCondition(ptr->son->token,ptr->son->brother);
-			fprintf(fp,"GOFALSE OUT\n");
-			processOperator(ptr->son->brother->token,ptr->son->brother);
-			break;
-		case IF_ELSE_ST:
-			processCondition(ptr->son->token,ptr->son->brother);
-			fprintf(fp,"GOTRUE IF\n");
-			processOperator(ptr->son->brother->token,ptr->son->brother);
-			//processOperator(ptr->son->brother->brother->token,ptr->son->brother->brother);
-			fprintf(fp,"GOTO OUT\n");
+		case IF: case IF_ELSE_ST:
+			IfCnt++;
+			fprintf(fp,"LABEL OUT\n");
 			break;
 		case WHILE:
 			fprintf(fp,"LABEL LOOP\n");
@@ -386,6 +391,10 @@ void prtcode(int token,Node *ptr)
 			break;	
 		case ASSGN:
 			fprintf(fp, ":=\n");
+			if(IfCnt-1==ElseCnt){
+				fprintf(fp,"GOTO OUT\n");
+				genElseLabel();
+			}
 			break;
 		case STMTLIST:
 		default:
