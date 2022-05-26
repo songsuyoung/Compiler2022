@@ -28,15 +28,19 @@ id		{letter}({letter}|{digit})*
 고봅하바기비	{return(MUL); }
 나바누붓세벰	{return(DIV); }
 나바머버지비	{return(MOD); }
+
 크브다바	{return(GT); }
 크브거버나바가밭다바 {return (GE);}
 자박다바	{return(LT); }
 자박거버나바가밭다바 {return (LE);}
 가밭다바	{return (EQ);}
+
 마반야뱍에베	{return (IF);}
+마반야뱍에베또보느븐 {return (IF_ELSE_ST);} 
 아반니비라바며변 {return (ELSE);}
 며변		{return (THEN);}
-마반야뱍끄븥	{return (IFEND);}
+바반보복	{return (WHILE);}
+이빕려벽	{ return (INPUT);}
 :=		{return(ASSGN); }
 ;		{return(STMTEND); }
 시비자박		{return(START); }

@@ -1,5 +1,4 @@
-#define _CRT_SECURE_NO_WARNINGS
-/* A Bison parser, made by GNU Bison 3.3.2.  */
+#define _CRT_SECURE_NO_WARNINGS/* A Bison parser, made by GNU Bison 3.3.2.  */
 
 /* Bison implementation for Yacc-like parsers in C
 
@@ -107,13 +106,16 @@ Node * MakeNode(int, int);
 Node * MakeListTree(Node*, Node*);
 void codegen(Node* );
 void prtcode(int,Node*);
-
+void Input(char *);
+void genIfLabel();
+void genElseLabel();
 void	dwgen();
 int	gentemp();
 /*내가 생성한 함수*/
-void	processStatement(Node *); //조건문 반복문 수행 함수
+Node * MakeSTMTree(int, Node *, Node *,Node *);
+void	processStatement(int,Node *); //조건문 반복문 수행 함수
 void	processOperator(int,Node *); //연산문 수행함수.
-void 	processCondition(int,Node *); //반복문 수행함수
+void 	processCondition(int,Node *); //연산자 수행함수
 /*내가 생성한 함수, 최대한 노드를 이용해보자.*/
 
 //void	assgnstmt(int, int);
@@ -122,7 +124,8 @@ void 	processCondition(int,Node *); //반복문 수행함수
 //void	substmt(int, int, int);
 int	insertsym(char *);
 
-#line 125 "cbu2.c" /* yacc.c:337  */
+
+#line 129 "cbu2.c" /* yacc.c:337  */
 # ifndef YY_NULLPTR
 #  if defined __cplusplus
 #   if 201103L <= __cplusplus
@@ -165,23 +168,25 @@ extern int yydebug;
     NUM = 260,
     STMTEND = 261,
     START = 262,
-    END = 263,
-    ID2 = 264,
-    IF = 265,
-    ELSE = 266,
-    GT = 267,
-    GE = 268,
-    LT = 269,
-    LE = 270,
-    EQ = 271,
-    IFEND = 272,
-    THEN = 273,
-    WHILE = 274,
-    ADD = 275,
-    SUB = 276,
-    MUL = 277,
-    MOD = 278,
-    DIV = 279
+    WHILE = 263,
+    END = 264,
+    ID2 = 265,
+    IF = 266,
+    IF_ELSE_ST = 267,
+    ELSE = 268,
+    GT = 269,
+    GE = 270,
+    LT = 271,
+    LE = 272,
+    EQ = 273,
+    THEN = 274,
+    INPUT = 275,
+    CHAROUT = 276,
+    ADD = 277,
+    SUB = 278,
+    MUL = 279,
+    MOD = 280,
+    DIV = 281
   };
 #endif
 
@@ -432,10 +437,10 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  10
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   46
+#define YYLAST   49
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  25
+#define YYNTOKENS  27
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  9
 /* YYNRULES -- Number of rules.  */
@@ -444,7 +449,7 @@ union yyalloc
 #define YYNSTATES  46
 
 #define YYUNDEFTOK  2
-#define YYMAXUTOK   279
+#define YYMAXUTOK   281
 
 /* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
    as returned by yylex, with out-of-bounds checking.  */
@@ -482,16 +487,17 @@ static const yytype_uint8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
-      15,    16,    17,    18,    19,    20,    21,    22,    23,    24
+      15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
+      25,    26
 };
 
 #if YYDEBUG
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    63,    63,    66,    67,    68,    71,    72,    73,    75,
-      81,    82,    83,    84,    87,    88,    89,    92,    93,    94,
-      95,    98,    99
+       0,    68,    68,    71,    72,    73,    76,    77,    80,    81,
+      84,    85,    86,    87,    90,    91,    92,    95,    96,    97,
+      98,   101,   102
 };
 #endif
 
@@ -501,10 +507,10 @@ static const yytype_uint8 yyrline[] =
 static const char *const yytname[] =
 {
   "$end", "error", "$undefined", "ASSGN", "ID", "NUM", "STMTEND", "START",
-  "END", "ID2", "IF", "ELSE", "GT", "GE", "LT", "LE", "EQ", "IFEND",
-  "THEN", "WHILE", "ADD", "SUB", "MUL", "MOD", "DIV", "$accept", "program",
-  "stmt_list", "stmt", "unmatched", "condition_stmt", "expr", "term",
-  "fact", YY_NULLPTR
+  "WHILE", "END", "ID2", "IF", "IF_ELSE_ST", "ELSE", "GT", "GE", "LT",
+  "LE", "EQ", "THEN", "INPUT", "CHAROUT", "ADD", "SUB", "MUL", "MOD",
+  "DIV", "$accept", "program", "stmt_list", "stmt", "unmatched",
+  "condition_stmt", "expr", "term", "fact", YY_NULLPTR
 };
 #endif
 
@@ -515,14 +521,14 @@ static const yytype_uint16 yytoknum[] =
 {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
      265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
-     275,   276,   277,   278,   279
+     275,   276,   277,   278,   279,   280,   281
 };
 # endif
 
-#define YYPACT_NINF -22
+#define YYPACT_NINF -14
 
 #define yypact_value_is_default(Yystate) \
-  (!!((Yystate) == (-22)))
+  (!!((Yystate) == (-14)))
 
 #define YYTABLE_NINF -1
 
@@ -533,11 +539,11 @@ static const yytype_uint16 yytoknum[] =
      STATE-NUM.  */
 static const yytype_int8 yypact[] =
 {
-      -2,     3,     9,    11,     7,    41,    41,     4,   -22,   -22,
-     -22,   -22,    41,   -22,   -22,    -3,    18,   -22,    16,   -22,
-     -22,     5,   -21,    25,    41,    41,    41,    41,    41,    41,
-      41,    25,   -22,    41,    41,   -22,   -21,   -21,   -21,   -21,
-     -22,   -22,   -22,   -22,   -21,   -21
+      12,     2,     7,    -4,    26,     0,     0,    27,   -14,   -14,
+     -14,   -14,     0,   -14,   -14,    31,    11,    20,   -14,    31,
+     -14,   -14,    -5,   -14,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,    19,   -14,   -12,   -12,   -12,   -12,    20,
+      20,   -14,   -14,   -14,    31,   -14
 };
 
   /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -545,23 +551,23 @@ static const yytype_int8 yypact[] =
      means the default is an error.  */
 static const yytype_uint8 yydefact[] =
 {
-       0,     0,     0,     0,     0,     0,     0,     0,     4,     8,
-       1,     5,     0,    21,    22,     0,     0,    20,     0,     2,
-       3,     0,    16,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     6,     0,     0,     9,    10,    11,    12,    13,
-      17,    19,    18,     7,    14,    15
+       0,     0,     0,     0,     0,     0,     0,     0,     4,     7,
+       1,     5,     0,    21,    22,     0,     0,    16,    20,     0,
+       2,     3,     0,     8,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     6,    10,    11,    12,    13,    14,
+      15,    17,    19,    18,     0,     9
 };
 
   /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -22,   -22,   -22,    -7,   -22,    33,   -22,    -6,     8
+     -14,   -14,   -14,    -7,   -14,    14,    -3,   -13,    17
 };
 
   /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-      -1,     2,     7,     8,     9,    15,    21,    16,    17
+      -1,     2,     7,     8,     9,    15,    16,    17,    18
 };
 
   /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -569,45 +575,45 @@ static const yytype_int8 yydefgoto[] =
      number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_uint8 yytable[] =
 {
-      20,    28,    29,    30,     3,     1,    22,     4,     4,    10,
-      12,    32,    19,     5,     5,    23,    35,    11,    36,    37,
-      38,    39,     6,     6,    43,    33,    34,    44,    45,     4,
-      24,    25,    26,    27,    31,     5,    40,    41,    42,    18,
-      28,    29,    30,     0,     6,    13,    14
+      21,    34,    11,     3,    13,    14,     4,    10,    23,    22,
+      28,    29,    33,     5,     6,    39,    40,    28,    29,     1,
+      19,    35,    36,    37,    38,    24,    25,    26,    27,    12,
+       0,     4,    44,    28,    29,     4,    20,    45,     5,     6,
+       0,     0,     5,     6,    30,    31,    32,    41,    42,    43
 };
 
 static const yytype_int8 yycheck[] =
 {
-       7,    22,    23,    24,     1,     7,    12,     4,     4,     0,
-       3,     6,     8,    10,    10,    18,    23,     6,    24,    25,
-      26,    27,    19,    19,    31,    20,    21,    33,    34,     4,
-      12,    13,    14,    15,    18,    10,    28,    29,    30,     6,
-      22,    23,    24,    -1,    19,     4,     5
+       7,     6,     6,     1,     4,     5,     4,     0,    15,    12,
+      22,    23,    19,    11,    12,    28,    29,    22,    23,     7,
+       6,    24,    25,    26,    27,    14,    15,    16,    17,     3,
+      -1,     4,    13,    22,    23,     4,     9,    44,    11,    12,
+      -1,    -1,    11,    12,    24,    25,    26,    30,    31,    32
 };
 
   /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
      symbol of state STATE-NUM.  */
 static const yytype_uint8 yystos[] =
 {
-       0,     7,    26,     1,     4,    10,    19,    27,    28,    29,
-       0,     6,     3,     4,     5,    30,    32,    33,    30,     8,
-      28,    31,    32,    18,    12,    13,    14,    15,    22,    23,
-      24,    18,     6,    20,    21,    28,    32,    32,    32,    32,
-      33,    33,    33,    28,    32,    32
+       0,     7,    28,     1,     4,    11,    12,    29,    30,    31,
+       0,     6,     3,     4,     5,    32,    33,    34,    35,    32,
+       9,    30,    33,    30,    14,    15,    16,    17,    22,    23,
+      24,    25,    26,    30,     6,    33,    33,    33,    33,    34,
+      34,    35,    35,    35,    13,    30
 };
 
   /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_uint8 yyr1[] =
 {
-       0,    25,    26,    27,    27,    27,    28,    28,    28,    29,
-      30,    30,    30,    30,    31,    31,    31,    32,    32,    32,
-      32,    33,    33
+       0,    27,    28,    29,    29,    29,    30,    30,    31,    31,
+      32,    32,    32,    32,    33,    33,    33,    34,    34,    34,
+      34,    35,    35
 };
 
   /* YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.  */
 static const yytype_uint8 yyr2[] =
 {
-       0,     2,     3,     2,     1,     2,     4,     4,     1,     4,
+       0,     2,     3,     2,     1,     2,     4,     1,     3,     5,
        3,     3,     3,     3,     3,     3,     1,     3,     3,     3,
        1,     1,     1
 };
@@ -1295,115 +1301,115 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 63 "cbu2.y" /* yacc.c:1652  */
+#line 68 "cbu2.y" /* yacc.c:1652  */
     { if (errorcnt==0) { codegen(yyvsp[-1]); dwgen();} }
-#line 1300 "cbu2.c" /* yacc.c:1652  */
+#line 1307 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 3:
-#line 66 "cbu2.y" /* yacc.c:1652  */
+#line 71 "cbu2.y" /* yacc.c:1652  */
     {yyval=MakeListTree(yyvsp[-1], yyvsp[0]);}
-#line 1306 "cbu2.c" /* yacc.c:1652  */
+#line 1313 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 4:
-#line 67 "cbu2.y" /* yacc.c:1652  */
+#line 72 "cbu2.y" /* yacc.c:1652  */
     {yyval=MakeListTree(NULL, yyvsp[0]);}
-#line 1312 "cbu2.c" /* yacc.c:1652  */
+#line 1319 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 5:
-#line 68 "cbu2.y" /* yacc.c:1652  */
+#line 73 "cbu2.y" /* yacc.c:1652  */
     { errorcnt++; yyerrok;}
-#line 1318 "cbu2.c" /* yacc.c:1652  */
+#line 1325 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 6:
-#line 71 "cbu2.y" /* yacc.c:1652  */
+#line 76 "cbu2.y" /* yacc.c:1652  */
     {yyvsp[-3]->token=ID2; yyval=MakeOPTree(ASSGN,yyvsp[-3],yyvsp[-1]);}
-#line 1324 "cbu2.c" /* yacc.c:1652  */
+#line 1331 "cbu2.c" /* yacc.c:1652  */
     break;
 
-  case 7:
-#line 72 "cbu2.y" /* yacc.c:1652  */
-    {yyval=MakeOPTree(WHILE,yyvsp[-2],yyvsp[0]);}
-#line 1330 "cbu2.c" /* yacc.c:1652  */
+  case 8:
+#line 80 "cbu2.y" /* yacc.c:1652  */
+    {yyval=MakeOPTree(IF,yyvsp[-1],yyvsp[0]);}
+#line 1337 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 9:
-#line 75 "cbu2.y" /* yacc.c:1652  */
-    {yyval=MakeOPTree(IF,yyvsp[-2],yyvsp[0]);}
-#line 1336 "cbu2.c" /* yacc.c:1652  */
+#line 81 "cbu2.y" /* yacc.c:1652  */
+    { yyval=MakeSTMTree(IF_ELSE_ST,yyvsp[-3],yyvsp[-2],yyvsp[0]); }
+#line 1343 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 10:
-#line 81 "cbu2.y" /* yacc.c:1652  */
-    {yyval=MakeOPTree(GT,yyvsp[-2],yyvsp[0]); }
-#line 1342 "cbu2.c" /* yacc.c:1652  */
+#line 84 "cbu2.y" /* yacc.c:1652  */
+    { yyval=MakeOPTree(GT,yyvsp[-2],yyvsp[0]); genElseLabel();}
+#line 1349 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 11:
-#line 82 "cbu2.y" /* yacc.c:1652  */
+#line 85 "cbu2.y" /* yacc.c:1652  */
     {yyval=MakeOPTree(GE,yyvsp[-2],yyvsp[0]); }
-#line 1348 "cbu2.c" /* yacc.c:1652  */
+#line 1355 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 12:
-#line 83 "cbu2.y" /* yacc.c:1652  */
+#line 86 "cbu2.y" /* yacc.c:1652  */
     {yyval=MakeOPTree(LT,yyvsp[-2],yyvsp[0]); }
-#line 1354 "cbu2.c" /* yacc.c:1652  */
+#line 1361 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 13:
-#line 84 "cbu2.y" /* yacc.c:1652  */
+#line 87 "cbu2.y" /* yacc.c:1652  */
     {yyval=MakeOPTree(LE,yyvsp[-2],yyvsp[0]); }
-#line 1360 "cbu2.c" /* yacc.c:1652  */
+#line 1367 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 14:
-#line 87 "cbu2.y" /* yacc.c:1652  */
+#line 90 "cbu2.y" /* yacc.c:1652  */
     { yyval=MakeOPTree(ADD,yyvsp[-2],yyvsp[0]); }
-#line 1366 "cbu2.c" /* yacc.c:1652  */
+#line 1373 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 15:
-#line 88 "cbu2.y" /* yacc.c:1652  */
+#line 91 "cbu2.y" /* yacc.c:1652  */
     { yyval=MakeOPTree(SUB, yyvsp[-2], yyvsp[0]); }
-#line 1372 "cbu2.c" /* yacc.c:1652  */
+#line 1379 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 17:
-#line 92 "cbu2.y" /* yacc.c:1652  */
+#line 95 "cbu2.y" /* yacc.c:1652  */
     { yyval=MakeOPTree(MUL, yyvsp[-2], yyvsp[0]); }
-#line 1378 "cbu2.c" /* yacc.c:1652  */
+#line 1385 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 18:
-#line 93 "cbu2.y" /* yacc.c:1652  */
+#line 96 "cbu2.y" /* yacc.c:1652  */
     { yyval=MakeOPTree(DIV, yyvsp[-2], yyvsp[0]); }
-#line 1384 "cbu2.c" /* yacc.c:1652  */
+#line 1391 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 19:
-#line 94 "cbu2.y" /* yacc.c:1652  */
+#line 97 "cbu2.y" /* yacc.c:1652  */
     { yyval=MakeOPTree(MOD, yyvsp[-2], yyvsp[0]); }
-#line 1390 "cbu2.c" /* yacc.c:1652  */
+#line 1397 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 21:
-#line 98 "cbu2.y" /* yacc.c:1652  */
+#line 101 "cbu2.y" /* yacc.c:1652  */
     { /* ID node is created in lex */ }
-#line 1396 "cbu2.c" /* yacc.c:1652  */
+#line 1403 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 22:
-#line 99 "cbu2.y" /* yacc.c:1652  */
+#line 102 "cbu2.y" /* yacc.c:1652  */
     { /* NUM node is created in lex */ }
-#line 1402 "cbu2.c" /* yacc.c:1652  */
+#line 1409 "cbu2.c" /* yacc.c:1652  */
     break;
 
 
-#line 1406 "cbu2.c" /* yacc.c:1652  */
+#line 1413 "cbu2.c" /* yacc.c:1652  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1634,7 +1640,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 103 "cbu2.y" /* yacc.c:1918  */
+#line 106 "cbu2.y" /* yacc.c:1918  */
 
 int main(int argc, char *argv[]) 
 {
@@ -1679,6 +1685,22 @@ Node * MakeOPTree(int op, Node* operand1, Node* operand2)
 	return newnode;
 }
 
+
+Node * MakeSTMTree(int op, Node *operand1, Node *stmt,Node *stmt1){
+
+	Node * newnode;
+
+	newnode = (Node *)malloc(sizeof(Node));
+	newnode->token=op;
+	newnode->tokenval=op;
+	newnode->son=operand1;
+	newnode->brother=NULL;
+	operand1->brother=stmt;
+	stmt->brother=stmt1;
+
+	return newnode;
+}
+
 Node * MakeNode(int token, int operand)
 {
 	Node * newnode;
@@ -1689,6 +1711,13 @@ Node * MakeNode(int token, int operand)
 	return newnode;
 }
 
+void genIfLabel(){
+	fprintf(fp,"LABEL IF\n");
+}
+
+void genElseLabel(){
+	fprintf(fp,"LABEL ELSE\n");
+}
 Node * MakeListTree(Node* operand1, Node* operand2)
 {
 	Node * newnode;
@@ -1727,7 +1756,7 @@ void processOperator(int token,Node *ptr){
 		case MOD:
 			fprintf(fp,"POP\n"); //B 빼기
 			fprintf(fp,"POP\n"); //B 빼기
-			if(ptr->son->token==NUM&&ptr->son->brother->token){ //가능
+			if(ptr->son->token==NUM&&ptr->son->brother->token==NUM){ //가능
 				fprintf(fp,"PUSH %d\n",ptr->son->tokenval);
 				fprintf(fp,"PUSH %d\n",ptr->son->tokenval);
 				fprintf(fp,"PUSH %d\n",ptr->son->brother->tokenval);
@@ -1776,46 +1805,97 @@ void DFSTree(Node * n)
 	DFSTree(n->brother);
 
 }
-void genLabel(char *label){
-	fprintf(fp,"LABEL %s",label);
-}
-void emitJump(char *select,char *label){
-	fprintf(fp,"%s %s",select,label); //true/false 확인 label로 이동.
-}
 void processCondition(int token,Node *ptr){
 
-	switch(token){
-		case GT: //크다
-			fprintf(fp,"-\n");
-			fprintf(fp,"COPY\n");
-			fprintf(fp,"GOFALSE OUT\n");
-			fprintf(fp,"GOMINUS OUT\n");
-			fprintf(fp,"PUSH %d\n",1);
+	
+	switch(token){ //오른쪽이 왼쪽보다 크다. 0일때 Out
+		case GT: //크다 음수일경우 0을 삽입
+			fprintf(fp,"POP\n");
+			fprintf(fp,"POP\n");
+			if(ptr->son->token==NUM&&ptr->son->brother->token==NUM){ //가능
+				fprintf(fp,"PUSH %d\n",ptr->son->tokenval>ptr->son->brother->tokenval);
+			}
+			else if(ptr->son->token!=NUM&&ptr->son->brother->token==NUM) //가능
+				fprintf(fp,"PUSH %d\n",symtbl[ptr->son->tokenval] > ptr->son->brother->tokenval);
+			else if(ptr->son->token==NUM&&ptr->son->brother->token!=NUM) //가능
+				fprintf(fp,"PUSH %d\n",ptr->son->tokenval>symtbl[ptr->son->brother->tokenval]);
+			else
+				fprintf(fp,"PUSH %d\n",symtbl[ptr->son->tokenval]>symtbl[ptr->son->brother->tokenval]);
+			
+			genIfLabel(); //if label 미리 달기 
 			break;
-		case LT: //작다
-			fprintf(fp,"-\n");
-			fprintf(fp,"COPY");
-			fprintf(fp,"GOTURE OUT\n");
-			fprintf(fp,"GOMINUS OUT\n");
-			fprintf(fp,"PUSH %d\n",1);
+		case LT: //작다 오른쪽이 왼쪽보다 작다 -> 1
+
+			if(ptr->son->token==NUM&&ptr->son->brother->token==NUM)
+				fprintf(fp,"PUSH %d\n",ptr->son->tokenval<ptr->son->brother->tokenval);
+			else if(ptr->son->token!=NUM&&ptr->brother->token==NUM)
+				fprintf(fp,"PUSH %d\n",symtbl[ptr->son->tokenval]<ptr->brother->tokenval);
+			else if(ptr->son->token==NUM&&ptr->brother->token!=NUM)
+				fprintf(fp,"PUSH %d\n",ptr->son->tokenval<symtbl[ptr->brother->tokenval]);
+			else
+				fprintf(fp,"PUSH %d\n",symtbl[ptr->son->tokenval]<symtbl[ptr->brother->tokenval]);
 			break;
 		case GE: //크거나 같다.
-			fprintf(fp,"-\n");
-			fprintf(fp,"GOMINUS OUT\n");
-			fprintf(fp,"PUSH %d\n",1);
+
+			if(ptr->son->token==NUM&&ptr->brother->token==NUM)
+				fprintf(fp,"PUSH %d\n",ptr->son->tokenval>=ptr->brother->tokenval);
+			else if(ptr->son->token!=NUM&&ptr->brother->token==NUM)
+				fprintf(fp,"PUSH %d\n",symtbl[ptr->son->tokenval]>=ptr->brother->tokenval);
+			else if(ptr->son->token==NUM&&ptr->brother->token!=NUM)
+				fprintf(fp,"PUSH %d\n",ptr->son->tokenval>=symtbl[ptr->brother->tokenval]);
+			else
+				fprintf(fp,"PUSH %d\n",symtbl[ptr->son->tokenval]>=symtbl[ptr->brother->tokenval]);
 			break; 
 		case LE: //작거나 같다
-			fprintf(fp,"-\n");
-			fprintf(fp,"GOPLUS OUT\n");
-			fprintf(fp,"PUSH %d\n",1);
+			
+			if(ptr->son->token==NUM&&ptr->brother->token==NUM)
+				fprintf(fp,"PUSH %d\n",ptr->son->tokenval<=ptr->brother->tokenval);
+			else if(ptr->son->token!=NUM&&ptr->brother->token==NUM)
+				fprintf(fp,"PUSH %d\n",symtbl[ptr->son->tokenval]<=ptr->brother->tokenval);
+			else if(ptr->son->token==NUM&&ptr->brother->token!=NUM)
+				fprintf(fp,"PUSH %d\n",ptr->son->tokenval<=symtbl[ptr->brother->tokenval]);
+			else
+				fprintf(fp,"PUSH %d\n",symtbl[ptr->son->tokenval]<=symtbl[ptr->brother->tokenval]);
 			break;
 		case EQ:
-			fprintf(fp,"-\n");
-			fprintf(fp,"GOTRUE OUT\n");
-			fprintf(fp,"PUSH %d\n",1);
+
+			if(ptr->son->token==NUM&&ptr->brother->token==NUM)
+				fprintf(fp,"PUSH %d\n",ptr->son->tokenval==ptr->brother->tokenval);
+			else if(ptr->son->token!=NUM&&ptr->brother->token==NUM)
+				fprintf(fp,"PUSH %d\n",symtbl[ptr->son->tokenval]==ptr->brother->tokenval);
+			else if(ptr->son->token==NUM&&ptr->brother->token!=NUM)
+				fprintf(fp,"PUSH %d\n",ptr->son->tokenval==symtbl[ptr->brother->tokenval]);
+			else
+				fprintf(fp,"PUSH %d\n",symtbl[ptr->son->tokenval]==symtbl[ptr->brother->tokenval]);
 			break;
 	}
 
+}
+
+void processStatement(int token,Node *ptr){
+
+	switch(token){
+		case IF:
+			processCondition(ptr->son->token,ptr->son->brother);
+			fprintf(fp,"GOFALSE OUT\n");
+			processOperator(ptr->son->brother->token,ptr->son->brother);
+			break;
+		case IF_ELSE_ST:
+			processCondition(ptr->son->token,ptr->son->brother);
+			fprintf(fp,"GOTRUE IF\n");
+			processOperator(ptr->son->brother->token,ptr->son->brother);
+			//processOperator(ptr->son->brother->brother->token,ptr->son->brother->brother);
+			fprintf(fp,"GOTO OUT\n");
+			break;
+		case WHILE:
+			fprintf(fp,"LABEL LOOP\n");
+			processCondition(ptr->son->brother->token,ptr->son->brother);
+			
+			processOperator(ptr->son->brother->brother->token,ptr->son->brother->brother);
+//fprintf(fp,"GOFALSE OUT\n");
+			//fprintf(fp,"GOTO LOOP\n");
+			break;
+	}
 }
 void prtcode(int token,Node *ptr)
 {
@@ -1836,15 +1916,12 @@ void prtcode(int token,Node *ptr)
 		case MOD:
 			processOperator(token,ptr);
 			break;
-		case GT:
+		case GT: case LT: case LE: case GE: case EQ:
 			processCondition(token,ptr);
 			break;
-		case IF:
-			//processStatement(ptr);
-			break;
-		case WHILE:
-			//processStatement(token,ptr);
-			break;
+		case IF:case IF_ELSE_ST:case WHILE:
+			processStatement(token,ptr);
+			break;	
 		case ASSGN:
 			fprintf(fp, ":=\n");
 			break;

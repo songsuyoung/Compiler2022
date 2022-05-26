@@ -37,13 +37,16 @@ Node * MakeNode(int, int);
 Node * MakeListTree(Node*, Node*);
 void codegen(Node* );
 void prtcode(int,Node*);
-
+void Input(char *);
+void genIfLabel();
+void genElseLabel();
 void	dwgen();
 int	gentemp();
 /*내가 생성한 함수*/
-void	processStatement(Node *); //조건문 반복문 수행 함수
+Node * MakeSTMTree(int, Node *, Node *,Node *);
+void	processStatement(int,Node *); //조건문 반복문 수행 함수
 void	processOperator(int,Node *); //연산문 수행함수.
-void 	processCondition(int,Node *); //반복문 수행함수
+void 	processCondition(int,Node *); //연산자 수행함수
 /*내가 생성한 함수, 최대한 노드를 이용해보자.*/
 
 //void	assgnstmt(int, int);
@@ -51,9 +54,11 @@ void 	processCondition(int,Node *); //반복문 수행함수
 //void	addstmt(int, int, int);
 //void	substmt(int, int, int);
 int	insertsym(char *);
+
 %}
 
-%token ASSGN ID NUM STMTEND START END ID2 IF ELSE GT GE LT LE EQ IFEND THEN WHILE /*add,sub는 같은 우선순위*//*div,mul는 같은 우선순위(왼쪽부터 차례로 우선순위 적용)*/
+%token ASSGN ID NUM STMTEND START WHILE END ID2 IF IF_ELSE_ST ELSE GT GE LT LE EQ THEN INPUT CHAROUT 
+/*add,sub는 같은 우선순위*//*div,mul는 같은 우선순위(왼쪽부터 차례로 우선순위 적용)*/
 /*CONEND는 만약에 (조건문) 면 (stmt)적용*/
 %left ADD SUB 
 %left MUL MOD DIV
@@ -64,24 +69,22 @@ program	: START stmt_list END	{ if (errorcnt==0) { codegen($2); dwgen();} } //co
 	;
 
 stmt_list: 	stmt_list stmt 	{$$=MakeListTree($1, $2);}
-|	stmt		{$$=MakeListTree(NULL, $1);}
-| 	error STMTEND	{ errorcnt++; yyerrok;}
+		| stmt {$$=MakeListTree(NULL, $1);}
+		| error STMTEND	{ errorcnt++; yyerrok;}
 ;
 
-stmt:		ID ASSGN expr STMTEND	{$1->token=ID2; $$=MakeOPTree(ASSGN,$1,$3);}
-|	WHILE condition_stmt THEN stmt	{$$=MakeOPTree(WHILE,$2,$4);} 
+stmt:	ID ASSGN expr STMTEND	{$1->token=ID2; $$=MakeOPTree(ASSGN,$1,$3);}
 |	unmatched
 ;
-unmatched:	IF condition_stmt THEN stmt {$$=MakeOPTree(IF,$2,$4);}
+
+unmatched:	IF condition_stmt stmt {$$=MakeOPTree(IF,$2,$3);}
+|	IF_ELSE_ST condition_stmt stmt ELSE stmt { $$=MakeSTMTree(IF_ELSE_ST,$2,$3,$5); }
 ;
-//IF condition_stmt CONEND stmt IFEND {$$=MakeListTree($2,$4);}
-//현재 해야할일 : 반복문 - 증가문 추가 조건문 - STMT 여러개 및 OPTree 구조 다시생각해보기.
 
-
-condition_stmt	: 	term GT term {$$=MakeOPTree(GT,$1,$3); }
-|	term GE term {$$=MakeOPTree(GE,$1,$3); }
-|	term LT term {$$=MakeOPTree(LT,$1,$3); }
-|	term LE term {$$=MakeOPTree(LE,$1,$3); }
+condition_stmt	: 	expr GT expr { $$=MakeOPTree(GT,$1,$3); genElseLabel();}
+|	expr GE expr {$$=MakeOPTree(GE,$1,$3); }
+|	expr LT expr {$$=MakeOPTree(LT,$1,$3); }
+|	expr LE expr {$$=MakeOPTree(LE,$1,$3); }
 ;
 
 expr	: expr ADD term	{ $$=MakeOPTree(ADD,$1,$3); }
@@ -144,6 +147,22 @@ Node * MakeOPTree(int op, Node* operand1, Node* operand2)
 	return newnode;
 }
 
+
+Node * MakeSTMTree(int op, Node *operand1, Node *stmt,Node *stmt1){
+
+	Node * newnode;
+
+	newnode = (Node *)malloc(sizeof(Node));
+	newnode->token=op;
+	newnode->tokenval=op;
+	newnode->son=operand1;
+	newnode->brother=NULL;
+	operand1->brother=stmt;
+	stmt->brother=stmt1;
+
+	return newnode;
+}
+
 Node * MakeNode(int token, int operand)
 {
 	Node * newnode;
@@ -154,6 +173,13 @@ Node * MakeNode(int token, int operand)
 	return newnode;
 }
 
+void genIfLabel(){
+	fprintf(fp,"LABEL IF\n");
+}
+
+void genElseLabel(){
+	fprintf(fp,"LABEL ELSE\n");
+}
 Node * MakeListTree(Node* operand1, Node* operand2)
 {
 	Node * newnode;
@@ -192,7 +218,7 @@ void processOperator(int token,Node *ptr){
 		case MOD:
 			fprintf(fp,"POP\n"); //B 빼기
 			fprintf(fp,"POP\n"); //B 빼기
-			if(ptr->son->token==NUM&&ptr->son->brother->token){ //가능
+			if(ptr->son->token==NUM&&ptr->son->brother->token==NUM){ //가능
 				fprintf(fp,"PUSH %d\n",ptr->son->tokenval);
 				fprintf(fp,"PUSH %d\n",ptr->son->tokenval);
 				fprintf(fp,"PUSH %d\n",ptr->son->brother->tokenval);
@@ -241,46 +267,97 @@ void DFSTree(Node * n)
 	DFSTree(n->brother);
 
 }
-void genLabel(char *label){
-	fprintf(fp,"LABEL %s",label);
-}
-void emitJump(char *select,char *label){
-	fprintf(fp,"%s %s",select,label); //true/false 확인 label로 이동.
-}
 void processCondition(int token,Node *ptr){
 
-	switch(token){
-		case GT: //크다
-			fprintf(fp,"-\n");
-			fprintf(fp,"COPY\n");
-			fprintf(fp,"GOFALSE OUT\n");
-			fprintf(fp,"GOMINUS OUT\n");
-			fprintf(fp,"PUSH %d\n",1);
+	
+	switch(token){ //오른쪽이 왼쪽보다 크다. 0일때 Out
+		case GT: //크다 음수일경우 0을 삽입
+			fprintf(fp,"POP\n");
+			fprintf(fp,"POP\n");
+			if(ptr->son->token==NUM&&ptr->son->brother->token==NUM){ //가능
+				fprintf(fp,"PUSH %d\n",ptr->son->tokenval>ptr->son->brother->tokenval);
+			}
+			else if(ptr->son->token!=NUM&&ptr->son->brother->token==NUM) //가능
+				fprintf(fp,"PUSH %d\n",symtbl[ptr->son->tokenval] > ptr->son->brother->tokenval);
+			else if(ptr->son->token==NUM&&ptr->son->brother->token!=NUM) //가능
+				fprintf(fp,"PUSH %d\n",ptr->son->tokenval>symtbl[ptr->son->brother->tokenval]);
+			else
+				fprintf(fp,"PUSH %d\n",symtbl[ptr->son->tokenval]>symtbl[ptr->son->brother->tokenval]);
+			
+			genIfLabel(); //if label 미리 달기 
 			break;
-		case LT: //작다
-			fprintf(fp,"-\n");
-			fprintf(fp,"COPY");
-			fprintf(fp,"GOTURE OUT\n");
-			fprintf(fp,"GOMINUS OUT\n");
-			fprintf(fp,"PUSH %d\n",1);
+		case LT: //작다 오른쪽이 왼쪽보다 작다 -> 1
+
+			if(ptr->son->token==NUM&&ptr->son->brother->token==NUM)
+				fprintf(fp,"PUSH %d\n",ptr->son->tokenval<ptr->son->brother->tokenval);
+			else if(ptr->son->token!=NUM&&ptr->brother->token==NUM)
+				fprintf(fp,"PUSH %d\n",symtbl[ptr->son->tokenval]<ptr->brother->tokenval);
+			else if(ptr->son->token==NUM&&ptr->brother->token!=NUM)
+				fprintf(fp,"PUSH %d\n",ptr->son->tokenval<symtbl[ptr->brother->tokenval]);
+			else
+				fprintf(fp,"PUSH %d\n",symtbl[ptr->son->tokenval]<symtbl[ptr->brother->tokenval]);
 			break;
 		case GE: //크거나 같다.
-			fprintf(fp,"-\n");
-			fprintf(fp,"GOMINUS OUT\n");
-			fprintf(fp,"PUSH %d\n",1);
+
+			if(ptr->son->token==NUM&&ptr->brother->token==NUM)
+				fprintf(fp,"PUSH %d\n",ptr->son->tokenval>=ptr->brother->tokenval);
+			else if(ptr->son->token!=NUM&&ptr->brother->token==NUM)
+				fprintf(fp,"PUSH %d\n",symtbl[ptr->son->tokenval]>=ptr->brother->tokenval);
+			else if(ptr->son->token==NUM&&ptr->brother->token!=NUM)
+				fprintf(fp,"PUSH %d\n",ptr->son->tokenval>=symtbl[ptr->brother->tokenval]);
+			else
+				fprintf(fp,"PUSH %d\n",symtbl[ptr->son->tokenval]>=symtbl[ptr->brother->tokenval]);
 			break; 
 		case LE: //작거나 같다
-			fprintf(fp,"-\n");
-			fprintf(fp,"GOPLUS OUT\n");
-			fprintf(fp,"PUSH %d\n",1);
+			
+			if(ptr->son->token==NUM&&ptr->brother->token==NUM)
+				fprintf(fp,"PUSH %d\n",ptr->son->tokenval<=ptr->brother->tokenval);
+			else if(ptr->son->token!=NUM&&ptr->brother->token==NUM)
+				fprintf(fp,"PUSH %d\n",symtbl[ptr->son->tokenval]<=ptr->brother->tokenval);
+			else if(ptr->son->token==NUM&&ptr->brother->token!=NUM)
+				fprintf(fp,"PUSH %d\n",ptr->son->tokenval<=symtbl[ptr->brother->tokenval]);
+			else
+				fprintf(fp,"PUSH %d\n",symtbl[ptr->son->tokenval]<=symtbl[ptr->brother->tokenval]);
 			break;
 		case EQ:
-			fprintf(fp,"-\n");
-			fprintf(fp,"GOTRUE OUT\n");
-			fprintf(fp,"PUSH %d\n",1);
+
+			if(ptr->son->token==NUM&&ptr->brother->token==NUM)
+				fprintf(fp,"PUSH %d\n",ptr->son->tokenval==ptr->brother->tokenval);
+			else if(ptr->son->token!=NUM&&ptr->brother->token==NUM)
+				fprintf(fp,"PUSH %d\n",symtbl[ptr->son->tokenval]==ptr->brother->tokenval);
+			else if(ptr->son->token==NUM&&ptr->brother->token!=NUM)
+				fprintf(fp,"PUSH %d\n",ptr->son->tokenval==symtbl[ptr->brother->tokenval]);
+			else
+				fprintf(fp,"PUSH %d\n",symtbl[ptr->son->tokenval]==symtbl[ptr->brother->tokenval]);
 			break;
 	}
 
+}
+
+void processStatement(int token,Node *ptr){
+
+	switch(token){
+		case IF:
+			processCondition(ptr->son->token,ptr->son->brother);
+			fprintf(fp,"GOFALSE OUT\n");
+			processOperator(ptr->son->brother->token,ptr->son->brother);
+			break;
+		case IF_ELSE_ST:
+			processCondition(ptr->son->token,ptr->son->brother);
+			fprintf(fp,"GOTRUE IF\n");
+			processOperator(ptr->son->brother->token,ptr->son->brother);
+			//processOperator(ptr->son->brother->brother->token,ptr->son->brother->brother);
+			fprintf(fp,"GOTO OUT\n");
+			break;
+		case WHILE:
+			fprintf(fp,"LABEL LOOP\n");
+			processCondition(ptr->son->brother->token,ptr->son->brother);
+			
+			processOperator(ptr->son->brother->brother->token,ptr->son->brother->brother);
+//fprintf(fp,"GOFALSE OUT\n");
+			//fprintf(fp,"GOTO LOOP\n");
+			break;
+	}
 }
 void prtcode(int token,Node *ptr)
 {
@@ -301,15 +378,12 @@ void prtcode(int token,Node *ptr)
 		case MOD:
 			processOperator(token,ptr);
 			break;
-		case GT:
+		case GT: case LT: case LE: case GE: case EQ:
 			processCondition(token,ptr);
 			break;
-		case IF:
-			//processStatement(ptr);
-			break;
-		case WHILE:
-			//processStatement(token,ptr);
-			break;
+		case IF:case IF_ELSE_ST:case WHILE:
+			processStatement(token,ptr);
+			break;	
 		case ASSGN:
 			fprintf(fp, ":=\n");
 			break;
