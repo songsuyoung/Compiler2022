@@ -68,11 +68,12 @@ extern int yydebug;
     THEN = 274,
     INPUT = 275,
     CHAROUT = 276,
-    ADD = 277,
-    SUB = 278,
-    MUL = 279,
-    MOD = 280,
-    DIV = 281
+    SQRT = 277,
+    ADD = 278,
+    SUB = 279,
+    MUL = 280,
+    MOD = 281,
+    DIV = 282
   };
 #endif
 

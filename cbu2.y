@@ -20,9 +20,19 @@ typedef struct nodeType {
 } Node;
 
 #define YYSTYPE Node*
-int IfCnt=0;
-int ElseCnt=0;
-int IfElseCnt=0;
+int IfCnt=-1;
+int setCnt=-1;
+int desCnt=-1;
+//if문을 관리할 cnt
+int Cnt=-1;
+int IfElseCnt=-1;
+int ElseCnt=-1;
+//if/else를 관리할 cnt
+
+int WhileCnt=-1;
+int LoopCnt=-1;
+int OutCnt=-1;
+//반복문 관리할 cnt 
 int tsymbolcnt=0;
 int errorcnt=0;
 
@@ -40,14 +50,15 @@ Node * MakeListTree(Node*, Node*);
 void codegen(Node* );
 void prtcode(int,Node*);
 void Input(char *);
-void genIfLabel();
-void genElseLabel();
-void genEndLabel();
+//void genIfLabel();
+//void genElseLabel();
+//void genEndLabel();
 void	dwgen();
 int	gentemp();
 /*내가 생성한 함수*/
+Node * MakeITRTree(int,Node *,Node *,Node *);
 Node * MakeSTMTree(int, Node *, Node *,Node *);
-void	processStatement(int,Node *); //조건문 반복문 수행 함수
+void	processStatement(Node *); //조건문 반복문 수행 함수
 void	processOperator(int,Node *); //연산문 수행함수.
 void 	processCondition(int,Node *); //연산자 수행함수
 /*내가 생성한 함수, 최대한 노드를 이용해보자.*/
@@ -60,7 +71,7 @@ int	insertsym(char *);
 
 %}
 
-%token ASSGN ID NUM STMTEND START WHILE END ID2 IF IF_ELSE_ST ELSE GT GE LT LE EQ THEN INPUT CHAROUT 
+%token ASSGN ID NUM STMTEND START WHILE END ID2 IF IF_ELSE_ST ELSE GT GE LT LE EQ THEN INPUT CHAROUT SQRT
 /*add,sub는 같은 우선순위*//*div,mul는 같은 우선순위(왼쪽부터 차례로 우선순위 적용)*/
 /*CONEND는 만약에 (조건문) 면 (stmt)적용*/
 %left ADD SUB 
@@ -69,32 +80,31 @@ int	insertsym(char *);
 %%
 
 program	: START stmt_list END	{ if (errorcnt==0) { codegen($2); dwgen();} } //codegen은 node를 출력
-	;
+;	
 
-stmt_list: Statement {$$=$1;}
-	;
-
-Statement : ExpressionStatement 	{$$=MakeListTree(NULL, $1);}
-	| ExpressionStatement SelectionStatement {$$=MakeListTree($1,$2);}
+stmt_list: stmt_list stmt {$$=MakeListTree($1,$2);}
+	|  stmt		{$$=MakeListTree(NULL,$1);}
 	| error STMTEND	{ errorcnt++; yyerrok;}
 	;
-			
-SelectionStatement:  unmatched {$$=$1;} ;	
 
-unmatched : IF condition_stmt stmt_list {$$=MakeOPTree(IF,$1,$2);}
-	| IF_ELSE_ST condition_stmt stmt_list ELSE stmt_list { $$=MakeSTMTree(IF_ELSE_ST,$2,$3,$5); }
-	 ;
-
-ExpressionStatement: stmt ExpressionStatement {$$=MakeListTree($1, $2);} 
-	| stmt {$$=MakeListTree(NULL,$1);}
-	;
-stmt: ID ASSGN expr STMTEND	{$1->token=ID2; $$=MakeOPTree(ASSGN,$1,$3);} 
+stmt	:   unmatched {$$=$1;}
+	|   iteration {$$=$1;}
+	|   assign    {$$=$1;}
 	;
 
-condition_stmt	: 	expr GT expr { $$=MakeOPTree(GT,$1,$3); }
-|	expr GE expr {$$=MakeOPTree(GE,$1,$3); }
-|	expr LT expr {$$=MakeOPTree(LT,$1,$3); }
-|	expr LE expr {$$=MakeOPTree(LE,$1,$3); }
+assign  : ID ASSGN expr STMTEND {$1->token=ID2; $$=MakeOPTree(ASSGN,$1,$3);}	;
+
+iteration : WHILE condition_stmt stmt stmt {$$=MakeSTMTree(WHILE,$2,$3,$4);}
+	;
+
+unmatched : IF condition_stmt stmt {$$=MakeOPTree(IF,$2,$3);}
+	| IF_ELSE_ST condition_stmt stmt ELSE stmt { $$=MakeSTMTree(IF_ELSE_ST,$2,$3,$5); }
+;
+
+condition_stmt	: 	fact GT fact { $$=MakeOPTree(GT,$1,$3); }
+|	fact GE fact {$$=MakeOPTree(GE,$1,$3); }
+|	fact LT fact {$$=MakeOPTree(LT,$1,$3); }
+|	fact LE fact {$$=MakeOPTree(LE,$1,$3); }
 ;
 
 expr	: expr ADD term	{ $$=MakeOPTree(ADD,$1,$3); }
@@ -105,6 +115,7 @@ expr	: expr ADD term	{ $$=MakeOPTree(ADD,$1,$3); }
 term	:	term MUL fact	{ $$=MakeOPTree(MUL, $1, $3); }
 	|	term DIV fact   { $$=MakeOPTree(DIV, $1, $3); }
 	|	term MOD fact	{ $$=MakeOPTree(MOD, $1, $3); }
+	|	term SQRT fact	{ $$=MakeOPTree(MUL,$1,$1); }
 	|	fact
 	;
 
@@ -145,6 +156,10 @@ yyerror(s)
 
 Node * MakeOPTree(int op, Node* operand1, Node* operand2)
 {
+	if(op==IF){
+		//setCnt++;
+		IfCnt++;
+	}
 	Node * newnode;
 
 	newnode = (Node *)malloc(sizeof (Node));
@@ -160,7 +175,14 @@ Node * MakeOPTree(int op, Node* operand1, Node* operand2)
 Node * MakeSTMTree(int op, Node *operand1, Node *stmt,Node *stmt1){
 	
 	Node * newnode;
-
+	
+	if(op==WHILE){
+		WhileCnt++;
+	}
+	if(op==IF){
+		setCnt++;
+		Cnt++;
+	}
 	newnode = (Node *)malloc(sizeof(Node));
 	newnode->token=op;
 	newnode->tokenval=op;
@@ -168,7 +190,6 @@ Node * MakeSTMTree(int op, Node *operand1, Node *stmt,Node *stmt1){
 	newnode->brother=NULL;
 	operand1->brother=stmt;
 	stmt->brother=stmt1;
-	
 	return newnode;
 }
 
@@ -182,17 +203,6 @@ Node * MakeNode(int token, int operand)
 	return newnode;
 }
 
-//void genEndLabel(){
-//	fprintf(fp,"LABEL END\n",ConCnt);
-//	ConCnt--;
-//}
-void genIfLabel(){
-	fprintf(fp,"LABEL IF%d\n",IfCnt++);
-}
-
-void genElseLabel(){
-	fprintf(fp,"LABEL ELSE%d\n",ElseCnt++);
-}
 Node * MakeListTree(Node* operand1, Node* operand2)
 {
 	Node * newnode;
@@ -282,33 +292,43 @@ void DFSTree(Node * n)
 }
 void processCondition(int token,Node *ptr){
 
-	
 	switch(token){ //오른쪽이 왼쪽보다 크다. 0일때 Out
 		case GT: //크다 음수일경우 0을 삽입
-			fprintf(fp,"POP\n");
-			fprintf(fp,"POP\n");
-			if(ptr->son->token==NUM&&ptr->son->brother->token==NUM){ //가능
-				fprintf(fp,"PUSH %d\n",ptr->son->tokenval>ptr->son->brother->tokenval);
+			fprintf(fp,"-\n");
+			
+			IfElseCnt++;
+			if(WhileCnt>-1&&WhileCnt!=OutCnt&&LoopCnt>-1){
+				fprintf(fp,"COPY\n");
+				fprintf(fp,"GOMINUS LOOPOUT%d\n",++OutCnt);
+				fprintf(fp,"GOFALSE LOOPOUT%d\n",OutCnt);
+				//set 고칠예정.
 			}
-			else if(ptr->son->token!=NUM&&ptr->son->brother->token==NUM) //가능
-				fprintf(fp,"PUSH %d\n",symtbl[ptr->son->tokenval] > ptr->son->brother->tokenval);
-			else if(ptr->son->token==NUM&&ptr->son->brother->token!=NUM) //가능
-				fprintf(fp,"PUSH %d\n",ptr->son->tokenval>symtbl[ptr->son->brother->tokenval]);
-			else
-				fprintf(fp,"PUSH %d\n",symtbl[ptr->son->tokenval]>symtbl[ptr->son->brother->tokenval]);
+			if(IfElseCnt>-1&&Cnt==IfElseCnt){
+				fprintf(fp,"GOFALSE ELSE%d\n",IfElseCnt);//0
+			}
+			//fprintf(fp,"GOFALSE ELSE%d\n",ElseCnt);
+			IfElseCnt++;
 			IfCnt++;
-			fprintf(fp,"GOFALSE ELSE%d\n",ElseCnt);
+			
+			if(IfCnt>-1&&Cnt!=IfCnt&&Cnt>-1)
+				fprintf(fp,"GOFALSE OUT%d\n",++setCnt);
 			break;
 		case LT: //작다 오른쪽이 왼쪽보다 작다 -> 1
-
-			if(ptr->son->token==NUM&&ptr->son->brother->token==NUM)
-				fprintf(fp,"PUSH %d\n",ptr->son->tokenval<ptr->son->brother->tokenval);
-			else if(ptr->son->token!=NUM&&ptr->brother->token==NUM)
-				fprintf(fp,"PUSH %d\n",symtbl[ptr->son->tokenval]<ptr->brother->tokenval);
-			else if(ptr->son->token==NUM&&ptr->brother->token!=NUM)
-				fprintf(fp,"PUSH %d\n",ptr->son->tokenval<symtbl[ptr->brother->tokenval]);
-			else
-				fprintf(fp,"PUSH %d\n",symtbl[ptr->son->tokenval]<symtbl[ptr->brother->tokenval]);
+			fprintf(fp,"-\n");
+			IfElseCnt++;
+			if(WhileCnt>-1&&WhileCnt!=OutCnt&&LoopCnt>-1){
+				fprintf(fp,"GOMINUS LOOPOUT%d\n",++OutCnt);
+				//set 고칠예정.
+			}
+			if(IfElseCnt>-1&&Cnt==IfElseCnt){
+				fprintf(fp,"GOFALSE ELSE%d\n",IfElseCnt);//0
+			}
+			//fprintf(fp,"GOFALSE ELSE%d\n",ElseCnt);
+			IfElseCnt++;
+			IfCnt++;
+			
+			if(IfCnt>-1&&Cnt!=IfCnt&&Cnt>-1)
+				fprintf(fp,"GOFALSE OUT%d\n",++setCnt);
 			break;
 		case GE: //크거나 같다.
 
@@ -347,20 +367,16 @@ void processCondition(int token,Node *ptr){
 
 }
 
-void processStatement(int token,Node *ptr){
+void processStatement(Node *ptr){
 
-	switch(token){
-		case IF: case IF_ELSE_ST:
-			IfCnt++;
-			fprintf(fp,"LABEL OUT\n");
+	switch(ptr->token){
+		case IF:
+		case IF_ELSE_ST:
+			fprintf(fp,"LABEL OUT%d\n",++desCnt);
 			break;
 		case WHILE:
-			fprintf(fp,"LABEL LOOP\n");
-			processCondition(ptr->son->brother->token,ptr->son->brother);
-			
-			processOperator(ptr->son->brother->brother->token,ptr->son->brother->brother);
-//fprintf(fp,"GOFALSE OUT\n");
-			//fprintf(fp,"GOTO LOOP\n");
+			fprintf(fp,"GOTO LOOP%d\n",WhileCnt);
+			fprintf(fp,"LABEL LOOPOUT%d\n",OutCnt);
 			break;
 	}
 }
@@ -387,14 +403,21 @@ void prtcode(int token,Node *ptr)
 			processCondition(token,ptr);
 			break;
 		case IF:case IF_ELSE_ST:case WHILE:
-			processStatement(token,ptr);
+			processStatement(ptr);
 			break;	
 		case ASSGN:
-			fprintf(fp, ":=\n");
-			if(IfCnt-1==ElseCnt){
-				fprintf(fp,"GOTO OUT\n");
-				genElseLabel();
+			fprintf(fp,":=\n");
+
+			if(WhileCnt>-1&&LoopCnt!=WhileCnt){
+				fprintf(fp,"LABEL LOOP%d\n",++LoopCnt);
 			}
+			if(IfElseCnt>-1&&IfCnt>-1&&Cnt>-1){
+				fprintf(fp,"GOTO OUT%d\n",setCnt);
+				IfCnt=-1;
+			}
+			
+			if(IfElseCnt>-1&&ElseCnt!=IfElseCnt&&ElseCnt!=Cnt)
+				fprintf(fp,"LABEL ELSE%d\n",++ElseCnt);
 			break;
 		case STMTLIST:
 		default:
