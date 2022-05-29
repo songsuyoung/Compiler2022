@@ -92,7 +92,7 @@ typedef struct nodeType {
 #define YYSTYPE Node*
 int IfCnt=-1;
 int setCnt=-1;
-int desCnt=-1;
+int desCnt=0;
 //if문을 관리할 cnt
 int Cnt=-1;
 int IfElseCnt=-1;
@@ -105,6 +105,9 @@ int OutCnt=-1;
 //반복문 관리할 cnt 
 int tsymbolcnt=0;
 int errorcnt=0;
+
+int checkStmt=0;
+//stmt가 앞에 몇개나왔는지 확인용.
 
 FILE *yyin;
 FILE *fp;
@@ -120,27 +123,21 @@ Node * MakeListTree(Node*, Node*);
 void codegen(Node* );
 void prtcode(int,Node*);
 void Input(char *);
-//void genIfLabel();
-//void genElseLabel();
-//void genEndLabel();
 void	dwgen();
 int	gentemp();
 /*내가 생성한 함수*/
 Node * MakeITRTree(int,Node *,Node *,Node *);
 Node * MakeSTMTree(int, Node *, Node *,Node *);
+Node * MakeSQRTree(int,Node *);
 void	processStatement(Node *); //조건문 반복문 수행 함수
 void	processOperator(int,Node *); //연산문 수행함수.
 void 	processCondition(int,Node *); //연산자 수행함수
 /*내가 생성한 함수, 최대한 노드를 이용해보자.*/
 
-//void	assgnstmt(int, int);
-//void	numassgn(int, int);
-//void	addstmt(int, int, int);
-//void	substmt(int, int, int);
 int	insertsym(char *);
 
 
-#line 143 "cbu2.c" /* yacc.c:337  */
+#line 140 "cbu2.c" /* yacc.c:337  */
 # ifndef YY_NULLPTR
 #  if defined __cplusplus
 #   if 201103L <= __cplusplus
@@ -183,26 +180,28 @@ extern int yydebug;
     NUM = 260,
     STMTEND = 261,
     START = 262,
-    WHILE = 263,
-    END = 264,
-    ID2 = 265,
-    IF = 266,
-    IF_ELSE_ST = 267,
-    ELSE = 268,
-    GT = 269,
-    GE = 270,
-    LT = 271,
-    LE = 272,
-    EQ = 273,
-    THEN = 274,
-    INPUT = 275,
-    CHAROUT = 276,
-    SQRT = 277,
-    ADD = 278,
-    SUB = 279,
-    MUL = 280,
-    MOD = 281,
-    DIV = 282
+    LPAR = 263,
+    RPAR = 264,
+    WHILE = 265,
+    END = 266,
+    MUL = 267,
+    DIV = 268,
+    LEFT = 269,
+    RIGHT = 270,
+    MOD = 271,
+    ADD = 272,
+    SUB = 273,
+    ID2 = 274,
+    IF = 275,
+    IF_ELSE_ST = 276,
+    ELSE = 277,
+    GT = 278,
+    GE = 279,
+    LT = 280,
+    LE = 281,
+    EQ = 282,
+    NQ = 283,
+    SQRT = 284
   };
 #endif
 
@@ -451,21 +450,21 @@ union yyalloc
 #endif /* !YYCOPY_NEEDED */
 
 /* YYFINAL -- State number of the termination state.  */
-#define YYFINAL  13
+#define YYFINAL  14
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   53
+#define YYLAST   83
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  28
+#define YYNTOKENS  32
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  11
+#define YYNNTS  12
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  26
+#define YYNRULES  33
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  54
+#define YYNSTATES  70
 
 #define YYUNDEFTOK  2
-#define YYMAXUTOK   282
+#define YYMAXUTOK   284
 
 /* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
    as returned by yylex, with out-of-bounds checking.  */
@@ -488,7 +487,7 @@ static const yytype_uint8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,    30,     2,    31,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -504,16 +503,17 @@ static const yytype_uint8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
-      25,    26,    27
+      25,    26,    27,    28,    29
 };
 
 #if YYDEBUG
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    82,    82,    85,    86,    87,    90,    91,    92,    95,
-      97,   100,   101,   104,   105,   106,   107,   110,   111,   112,
-     115,   116,   117,   118,   119,   122,   123
+       0,    80,    80,    83,    84,    85,    88,    89,    90,    93,
+      94,    97,   100,   101,   104,   105,   106,   107,   108,   109,
+     112,   113,   114,   116,   117,   118,   121,   122,   123,   124,
+     125,   128,   129,   130
 };
 #endif
 
@@ -523,10 +523,11 @@ static const yytype_uint8 yyrline[] =
 static const char *const yytname[] =
 {
   "$end", "error", "$undefined", "ASSGN", "ID", "NUM", "STMTEND", "START",
-  "WHILE", "END", "ID2", "IF", "IF_ELSE_ST", "ELSE", "GT", "GE", "LT",
-  "LE", "EQ", "THEN", "INPUT", "CHAROUT", "SQRT", "ADD", "SUB", "MUL",
-  "MOD", "DIV", "$accept", "program", "stmt_list", "stmt", "assign",
-  "iteration", "unmatched", "condition_stmt", "expr", "term", "fact", YY_NULLPTR
+  "LPAR", "RPAR", "WHILE", "END", "MUL", "DIV", "LEFT", "RIGHT", "MOD",
+  "ADD", "SUB", "ID2", "IF", "IF_ELSE_ST", "ELSE", "GT", "GE", "LT", "LE",
+  "EQ", "NQ", "SQRT", "'{'", "'}'", "$accept", "program", "stmt_list",
+  "stmt", "assign", "iteration", "unmatched", "condition_stmt", "bit",
+  "expr", "term", "fact", YY_NULLPTR
 };
 #endif
 
@@ -537,14 +538,15 @@ static const yytype_uint16 yytoknum[] =
 {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
      265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
-     275,   276,   277,   278,   279,   280,   281,   282
+     275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
+     123,   125
 };
 # endif
 
-#define YYPACT_NINF -21
+#define YYPACT_NINF -16
 
 #define yypact_value_is_default(Yystate) \
-  (!!((Yystate) == (-21)))
+  (!!((Yystate) == (-16)))
 
 #define YYTABLE_NINF -1
 
@@ -555,12 +557,13 @@ static const yytype_uint16 yytoknum[] =
      STATE-NUM.  */
 static const yytype_int8 yypact[] =
 {
-      11,    29,    20,    30,    39,    -1,    -1,    -1,    23,   -21,
-     -21,   -21,   -21,   -21,   -21,    -1,   -21,   -21,    35,    34,
-      35,    35,   -21,   -21,     5,   -20,   -21,    35,    -1,    -1,
-      -1,    -1,   -21,    40,   -21,    -1,    -1,    -1,    -1,    -1,
-      -1,   -21,   -21,   -21,   -21,   -21,    35,   -20,   -20,   -21,
-     -21,   -21,   -21,   -21
+      -3,     4,    10,     6,    18,    15,    15,    15,    29,    32,
+     -16,   -16,   -16,   -16,   -16,   -16,    15,   -16,   -16,    15,
+      68,    29,    43,    62,   -16,    29,    29,     7,   -16,   -16,
+       1,   -15,    46,   -16,    29,    15,    15,    15,    15,    15,
+      15,    15,    15,    68,    68,    68,   -16,    13,    17,   -16,
+      15,    15,   -16,   -16,    62,    62,   -15,   -15,   -15,   -15,
+     -15,   -15,   -16,   -16,   -16,    29,   -16,   -15,   -15,   -16
 };
 
   /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -568,26 +571,27 @@ static const yytype_int8 yypact[] =
      means the default is an error.  */
 static const yytype_uint8 yydefact[] =
 {
-       0,     0,     0,     0,     0,     0,     0,     0,     0,     4,
-       8,     7,     6,     1,     5,     0,    25,    26,     0,     0,
-       0,     0,     2,     3,     0,    19,    24,     0,     0,     0,
-       0,     0,    11,     0,     9,     0,     0,     0,     0,     0,
-       0,    10,    13,    14,    15,    16,     0,    17,    18,    23,
-      20,    22,    21,    12
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       4,     8,     7,     6,     1,     5,     0,    32,    33,     0,
+       0,     0,     0,    25,    30,     0,     0,     0,     2,     3,
+       0,    22,     0,    29,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,    12,     0,     0,     9,
+       0,     0,    31,    11,    23,    24,    14,    15,    16,    17,
+      18,    19,    26,    27,    28,     0,    10,    20,    21,    13
 };
 
   /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -21,   -21,   -21,    -8,   -21,   -21,   -21,     2,   -21,     9,
-     -14
+     -16,   -16,   -16,    -8,    11,   -16,   -16,    73,   -16,   -10,
+      47,     2
 };
 
   /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-      -1,     2,     8,     9,    10,    11,    12,    18,    24,    25,
-      19
+      -1,     2,     9,    10,    11,    12,    13,    21,    30,    22,
+      23,    24
 };
 
   /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -595,50 +599,59 @@ static const yytype_int8 yydefgoto[] =
      number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_uint8 yytable[] =
 {
-      23,    26,    37,    16,    17,    38,    39,    40,    20,    21,
-      27,    34,    32,    33,    42,    43,    44,    45,     1,    41,
-      13,    26,    26,    49,    50,    51,    52,     4,    35,    36,
-       3,     5,    22,     4,     6,     7,    14,     5,    53,     4,
-       6,     7,    15,     5,    47,    48,     6,     7,    28,    29,
-      30,    31,     0,    46
+      27,    29,    35,    36,     1,     3,    31,    49,     4,    32,
+      14,     4,    15,    34,     5,    50,    51,    46,    47,    17,
+      18,    16,    33,    19,     6,     7,    53,    56,    57,    58,
+      59,    60,    61,     4,     8,    65,     4,     8,    48,     5,
+      67,    68,     5,    28,    20,    62,    63,    64,    66,     6,
+       7,     0,     6,     7,     0,    52,     0,    69,     0,     8,
+      35,    36,     8,    35,    36,     0,    37,    38,    39,    40,
+      41,    42,    17,    18,    43,    44,    19,     0,    45,    25,
+      26,     0,    54,    55
 };
 
 static const yytype_int8 yycheck[] =
 {
-       8,    15,    22,     4,     5,    25,    26,    27,     6,     7,
-      18,     6,    20,    21,    28,    29,    30,    31,     7,    27,
-       0,    35,    36,    37,    38,    39,    40,     4,    23,    24,
-       1,     8,     9,     4,    11,    12,     6,     8,    46,     4,
-      11,    12,     3,     8,    35,    36,    11,    12,    14,    15,
-      16,    17,    -1,    13
+       8,     9,    17,    18,     7,     1,    16,     6,     4,    19,
+       0,     4,     6,    21,    10,    14,    15,    25,    26,     4,
+       5,     3,    20,     8,    20,    21,    34,    37,    38,    39,
+      40,    41,    42,     4,    30,    22,     4,    30,    27,    10,
+      50,    51,    10,    11,    29,    43,    44,    45,    31,    20,
+      21,    -1,    20,    21,    -1,     9,    -1,    65,    -1,    30,
+      17,    18,    30,    17,    18,    -1,    23,    24,    25,    26,
+      27,    28,     4,     5,    12,    13,     8,    -1,    16,     6,
+       7,    -1,    35,    36
 };
 
   /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
      symbol of state STATE-NUM.  */
 static const yytype_uint8 yystos[] =
 {
-       0,     7,    29,     1,     4,     8,    11,    12,    30,    31,
-      32,    33,    34,     0,     6,     3,     4,     5,    35,    38,
-      35,    35,     9,    31,    36,    37,    38,    31,    14,    15,
-      16,    17,    31,    31,     6,    23,    24,    22,    25,    26,
-      27,    31,    38,    38,    38,    38,    13,    37,    37,    38,
-      38,    38,    38,    31
+       0,     7,    33,     1,     4,    10,    20,    21,    30,    34,
+      35,    36,    37,    38,     0,     6,     3,     4,     5,     8,
+      29,    39,    41,    42,    43,    39,    39,    35,    11,    35,
+      40,    41,    41,    43,    35,    17,    18,    23,    24,    25,
+      26,    27,    28,    12,    13,    16,    35,    35,    36,     6,
+      14,    15,     9,    35,    42,    42,    41,    41,    41,    41,
+      41,    41,    43,    43,    43,    22,    31,    41,    41,    35
 };
 
   /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_uint8 yyr1[] =
 {
-       0,    28,    29,    30,    30,    30,    31,    31,    31,    32,
-      33,    34,    34,    35,    35,    35,    35,    36,    36,    36,
-      37,    37,    37,    37,    37,    38,    38
+       0,    32,    33,    34,    34,    34,    35,    35,    35,    36,
+      36,    37,    38,    38,    39,    39,    39,    39,    39,    39,
+      40,    40,    40,    41,    41,    41,    42,    42,    42,    42,
+      42,    43,    43,    43
 };
 
   /* YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.  */
 static const yytype_uint8 yyr2[] =
 {
        0,     2,     3,     2,     1,     2,     1,     1,     1,     4,
-       4,     3,     5,     3,     3,     3,     3,     3,     3,     1,
-       3,     3,     3,     3,     1,     1,     1
+       4,     4,     3,     5,     3,     3,     3,     3,     3,     3,
+       3,     3,     1,     3,     3,     1,     3,     3,     3,     2,
+       1,     3,     1,     1
 };
 
 
@@ -1324,145 +1337,175 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 82 "cbu2.y" /* yacc.c:1652  */
+#line 80 "cbu2.y" /* yacc.c:1652  */
     { if (errorcnt==0) { codegen(yyvsp[-1]); dwgen();} }
-#line 1329 "cbu2.c" /* yacc.c:1652  */
+#line 1342 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 3:
-#line 85 "cbu2.y" /* yacc.c:1652  */
+#line 83 "cbu2.y" /* yacc.c:1652  */
     {yyval=MakeListTree(yyvsp[-1],yyvsp[0]);}
-#line 1335 "cbu2.c" /* yacc.c:1652  */
+#line 1348 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 4:
-#line 86 "cbu2.y" /* yacc.c:1652  */
-    {yyval=MakeListTree(NULL,yyvsp[0]);}
-#line 1341 "cbu2.c" /* yacc.c:1652  */
+#line 84 "cbu2.y" /* yacc.c:1652  */
+    {yyval=MakeListTree(NULL,yyvsp[0]); }
+#line 1354 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 5:
-#line 87 "cbu2.y" /* yacc.c:1652  */
+#line 85 "cbu2.y" /* yacc.c:1652  */
     { errorcnt++; yyerrok;}
-#line 1347 "cbu2.c" /* yacc.c:1652  */
+#line 1360 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 6:
-#line 90 "cbu2.y" /* yacc.c:1652  */
+#line 88 "cbu2.y" /* yacc.c:1652  */
     {yyval=yyvsp[0];}
-#line 1353 "cbu2.c" /* yacc.c:1652  */
+#line 1366 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 7:
-#line 91 "cbu2.y" /* yacc.c:1652  */
+#line 89 "cbu2.y" /* yacc.c:1652  */
     {yyval=yyvsp[0];}
-#line 1359 "cbu2.c" /* yacc.c:1652  */
+#line 1372 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 8:
-#line 92 "cbu2.y" /* yacc.c:1652  */
+#line 90 "cbu2.y" /* yacc.c:1652  */
     {yyval=yyvsp[0];}
-#line 1365 "cbu2.c" /* yacc.c:1652  */
+#line 1378 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 9:
-#line 95 "cbu2.y" /* yacc.c:1652  */
+#line 93 "cbu2.y" /* yacc.c:1652  */
     {yyvsp[-3]->token=ID2; yyval=MakeOPTree(ASSGN,yyvsp[-3],yyvsp[-1]);}
-#line 1371 "cbu2.c" /* yacc.c:1652  */
-    break;
-
-  case 10:
-#line 97 "cbu2.y" /* yacc.c:1652  */
-    {yyval=MakeSTMTree(WHILE,yyvsp[-2],yyvsp[-1],yyvsp[0]);}
-#line 1377 "cbu2.c" /* yacc.c:1652  */
+#line 1384 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 11:
-#line 100 "cbu2.y" /* yacc.c:1652  */
-    {yyval=MakeOPTree(IF,yyvsp[-1],yyvsp[0]);}
-#line 1383 "cbu2.c" /* yacc.c:1652  */
+#line 97 "cbu2.y" /* yacc.c:1652  */
+    {yyval=MakeSTMTree(WHILE,yyvsp[-2],yyvsp[-1],yyvsp[0]);}
+#line 1390 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 12:
-#line 101 "cbu2.y" /* yacc.c:1652  */
-    { yyval=MakeSTMTree(IF_ELSE_ST,yyvsp[-3],yyvsp[-2],yyvsp[0]); }
-#line 1389 "cbu2.c" /* yacc.c:1652  */
+#line 100 "cbu2.y" /* yacc.c:1652  */
+    {yyval=MakeOPTree(IF,yyvsp[-1],yyvsp[0]);}
+#line 1396 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 13:
-#line 104 "cbu2.y" /* yacc.c:1652  */
-    { yyval=MakeOPTree(GT,yyvsp[-2],yyvsp[0]); }
-#line 1395 "cbu2.c" /* yacc.c:1652  */
+#line 101 "cbu2.y" /* yacc.c:1652  */
+    { yyval=MakeSTMTree(IF_ELSE_ST,yyvsp[-3],yyvsp[-2],yyvsp[0]); }
+#line 1402 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 14:
-#line 105 "cbu2.y" /* yacc.c:1652  */
-    {yyval=MakeOPTree(GE,yyvsp[-2],yyvsp[0]); }
-#line 1401 "cbu2.c" /* yacc.c:1652  */
+#line 104 "cbu2.y" /* yacc.c:1652  */
+    { yyval=MakeOPTree(GT,yyvsp[-2],yyvsp[0]); }
+#line 1408 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 15:
-#line 106 "cbu2.y" /* yacc.c:1652  */
-    {yyval=MakeOPTree(LT,yyvsp[-2],yyvsp[0]); }
-#line 1407 "cbu2.c" /* yacc.c:1652  */
+#line 105 "cbu2.y" /* yacc.c:1652  */
+    {yyval=MakeOPTree(GE,yyvsp[-2],yyvsp[0]); }
+#line 1414 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 16:
-#line 107 "cbu2.y" /* yacc.c:1652  */
-    {yyval=MakeOPTree(LE,yyvsp[-2],yyvsp[0]); }
-#line 1413 "cbu2.c" /* yacc.c:1652  */
+#line 106 "cbu2.y" /* yacc.c:1652  */
+    {yyval=MakeOPTree(LT,yyvsp[-2],yyvsp[0]); }
+#line 1420 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 17:
-#line 110 "cbu2.y" /* yacc.c:1652  */
-    { yyval=MakeOPTree(ADD,yyvsp[-2],yyvsp[0]); }
-#line 1419 "cbu2.c" /* yacc.c:1652  */
+#line 107 "cbu2.y" /* yacc.c:1652  */
+    {yyval=MakeOPTree(LE,yyvsp[-2],yyvsp[0]); }
+#line 1426 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 18:
-#line 111 "cbu2.y" /* yacc.c:1652  */
-    { yyval=MakeOPTree(SUB, yyvsp[-2], yyvsp[0]); }
-#line 1425 "cbu2.c" /* yacc.c:1652  */
+#line 108 "cbu2.y" /* yacc.c:1652  */
+    {yyval=MakeOPTree(EQ,yyvsp[-2],yyvsp[0]); }
+#line 1432 "cbu2.c" /* yacc.c:1652  */
+    break;
+
+  case 19:
+#line 109 "cbu2.y" /* yacc.c:1652  */
+    {yyval=MakeOPTree(NQ,yyvsp[-2],yyvsp[0]); }
+#line 1438 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 20:
-#line 115 "cbu2.y" /* yacc.c:1652  */
-    { yyval=MakeOPTree(MUL, yyvsp[-2], yyvsp[0]); }
-#line 1431 "cbu2.c" /* yacc.c:1652  */
+#line 112 "cbu2.y" /* yacc.c:1652  */
+    { yyval=MakeOPTree(LEFT,yyvsp[-2],yyvsp[0]);}
+#line 1444 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 21:
-#line 116 "cbu2.y" /* yacc.c:1652  */
-    { yyval=MakeOPTree(DIV, yyvsp[-2], yyvsp[0]); }
-#line 1437 "cbu2.c" /* yacc.c:1652  */
-    break;
-
-  case 22:
-#line 117 "cbu2.y" /* yacc.c:1652  */
-    { yyval=MakeOPTree(MOD, yyvsp[-2], yyvsp[0]); }
-#line 1443 "cbu2.c" /* yacc.c:1652  */
+#line 113 "cbu2.y" /* yacc.c:1652  */
+    { yyval=MakeOPTree(RIGHT,yyvsp[-2],yyvsp[0]);}
+#line 1450 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 23:
-#line 118 "cbu2.y" /* yacc.c:1652  */
-    { yyval=MakeOPTree(MUL,yyvsp[-2],yyvsp[-2]); }
-#line 1449 "cbu2.c" /* yacc.c:1652  */
+#line 116 "cbu2.y" /* yacc.c:1652  */
+    { yyval=MakeOPTree(ADD,yyvsp[-2],yyvsp[0]); }
+#line 1456 "cbu2.c" /* yacc.c:1652  */
     break;
 
-  case 25:
-#line 122 "cbu2.y" /* yacc.c:1652  */
-    { /* ID node is created in lex */ }
-#line 1455 "cbu2.c" /* yacc.c:1652  */
+  case 24:
+#line 117 "cbu2.y" /* yacc.c:1652  */
+    { yyval=MakeOPTree(SUB, yyvsp[-2], yyvsp[0]); }
+#line 1462 "cbu2.c" /* yacc.c:1652  */
     break;
 
   case 26:
+#line 121 "cbu2.y" /* yacc.c:1652  */
+    { yyval=MakeOPTree(MUL, yyvsp[-2], yyvsp[0]); }
+#line 1468 "cbu2.c" /* yacc.c:1652  */
+    break;
+
+  case 27:
+#line 122 "cbu2.y" /* yacc.c:1652  */
+    { yyval=MakeOPTree(DIV, yyvsp[-2], yyvsp[0]); }
+#line 1474 "cbu2.c" /* yacc.c:1652  */
+    break;
+
+  case 28:
 #line 123 "cbu2.y" /* yacc.c:1652  */
+    { yyval=MakeOPTree(MOD, yyvsp[-2], yyvsp[0]); }
+#line 1480 "cbu2.c" /* yacc.c:1652  */
+    break;
+
+  case 29:
+#line 124 "cbu2.y" /* yacc.c:1652  */
+    { yyval=MakeSQRTree(MUL, yyvsp[0]); }
+#line 1486 "cbu2.c" /* yacc.c:1652  */
+    break;
+
+  case 31:
+#line 128 "cbu2.y" /* yacc.c:1652  */
+    { yyval=yyvsp[-1];}
+#line 1492 "cbu2.c" /* yacc.c:1652  */
+    break;
+
+  case 32:
+#line 129 "cbu2.y" /* yacc.c:1652  */
+    { /* ID node is created in lex */ }
+#line 1498 "cbu2.c" /* yacc.c:1652  */
+    break;
+
+  case 33:
+#line 130 "cbu2.y" /* yacc.c:1652  */
     { /* NUM node is created in lex */ }
-#line 1461 "cbu2.c" /* yacc.c:1652  */
+#line 1504 "cbu2.c" /* yacc.c:1652  */
     break;
 
 
-#line 1465 "cbu2.c" /* yacc.c:1652  */
+#line 1508 "cbu2.c" /* yacc.c:1652  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1693,7 +1736,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 126 "cbu2.y" /* yacc.c:1918  */
+#line 133 "cbu2.y" /* yacc.c:1918  */
 
 int main(int argc, char *argv[]) 
 {
@@ -1725,10 +1768,31 @@ yyerror(s)
 	printf("%s (line %d)\n", s, lineno);
 }
 
+Node * MakeSQRTree(int op,Node* operand1){
+
+	Node * newnode;
+	Node * operand2;
+
+	newnode = (Node *)malloc(sizeof(Node));
+	operand2 = (Node *)malloc(sizeof(Node));
+	
+	operand2->token=operand1->token;
+	operand2->tokenval=operand1->tokenval;
+	operand2->son=operand1->son;
+	operand2->brother=operand1->brother;
+	
+	newnode->token=op;
+	newnode->tokenval=op;
+	newnode->son=operand1;
+	newnode->brother=NULL;
+	operand1->brother=operand2;
+	
+	return newnode;
+
+}
 Node * MakeOPTree(int op, Node* operand1, Node* operand2)
 {
 	if(op==IF){
-		//setCnt++;
 		IfCnt++;
 	}
 	Node * newnode;
@@ -1750,9 +1814,8 @@ Node * MakeSTMTree(int op, Node *operand1, Node *stmt,Node *stmt1){
 	if(op==WHILE){
 		WhileCnt++;
 	}
-	if(op==IF){
-		setCnt++;
-		Cnt++;
+	if(op==IF_ELSE_ST){
+		IfElseCnt++;
 	}
 	newnode = (Node *)malloc(sizeof(Node));
 	newnode->token=op;
@@ -1766,11 +1829,13 @@ Node * MakeSTMTree(int op, Node *operand1, Node *stmt,Node *stmt1){
 
 Node * MakeNode(int token, int operand)
 {
-	Node * newnode;
+	Node * newnode=NULL;
+
 	newnode = (Node *) malloc(sizeof (Node));
 	newnode->token = token;
 	newnode->tokenval = operand; 
 	newnode->son = newnode->brother = NULL;
+	
 	return newnode;
 }
 
@@ -1779,6 +1844,7 @@ Node * MakeListTree(Node* operand1, Node* operand2)
 	Node * newnode;
 	Node * node;
 
+	if(WhileCnt<0&&IfCnt<0&&IfElseCnt<0) checkStmt++;
 	if (operand1 == NULL){
 		newnode = (Node *)malloc(sizeof (Node));
 		newnode->token = newnode-> tokenval = STMTLIST;
@@ -1840,6 +1906,23 @@ void processOperator(int token,Node *ptr){
 				fprintf(fp,"*\n");
 				fprintf(fp,"-\n");
 			break;
+		case RIGHT://비트연산자 숫자되도록 하기.
+			fprintf(fp,"POP\n");
+			int rsqr=1;
+			for(int i=0;i<ptr->son->brother->tokenval;i++)
+				rsqr*=2;
+			
+			fprintf(fp,"PUSH %d\n",rsqr);
+			fprintf(fp,"/\n");
+			break;
+		case LEFT:
+			fprintf(fp,"POP\n");
+			int lsqr=1;	//2의 제곱근할 값
+			for(int i=0;i<ptr->son->brother->tokenval;i++)
+				lsqr*=2;
+			fprintf(fp,"PUSH %d\n",lsqr);
+			fprintf(fp,"*\n");
+			break;
 	}
 
 }
@@ -1866,74 +1949,91 @@ void processCondition(int token,Node *ptr){
 	switch(token){ //오른쪽이 왼쪽보다 크다. 0일때 Out
 		case GT: //크다 음수일경우 0을 삽입
 			fprintf(fp,"-\n");
-			
-			IfElseCnt++;
 			if(WhileCnt>-1&&WhileCnt!=OutCnt&&LoopCnt>-1){
 				fprintf(fp,"COPY\n");
 				fprintf(fp,"GOMINUS LOOPOUT%d\n",++OutCnt);
 				fprintf(fp,"GOFALSE LOOPOUT%d\n",OutCnt);
-				//set 고칠예정.
 			}
-			if(IfElseCnt>-1&&Cnt==IfElseCnt){
-				fprintf(fp,"GOFALSE ELSE%d\n",IfElseCnt);//0
+			else if(IfElseCnt>-1&&ElseCnt!=IfElseCnt){
+				fprintf(fp,"COPY\n");
+				fprintf(fp,"GOMINUS ELSE%d\n",++ElseCnt);
+				fprintf(fp,"GOFALSE ELSE%d\n",ElseCnt);//0
 			}
-			//fprintf(fp,"GOFALSE ELSE%d\n",ElseCnt);
-			IfElseCnt++;
-			IfCnt++;
-			
-			if(IfCnt>-1&&Cnt!=IfCnt&&Cnt>-1)
-				fprintf(fp,"GOFALSE OUT%d\n",++setCnt);
+			else if(IfCnt>-1&&IfCnt!=setCnt){
+				fprintf(fp,"COPY\n");
+				fprintf(fp,"GOMINUS OUT%d\n",++setCnt);
+				fprintf(fp,"GOFALSE OUT%d\n",setCnt);
+			}
+
 			break;
 		case LT: //작다 오른쪽이 왼쪽보다 작다 -> 1
+
 			fprintf(fp,"-\n");
-			IfElseCnt++;
 			if(WhileCnt>-1&&WhileCnt!=OutCnt&&LoopCnt>-1){
-				fprintf(fp,"GOMINUS LOOPOUT%d\n",++OutCnt);
-				//set 고칠예정.
+				fprintf(fp,"COPY\n");
+				fprintf(fp,"GOPLUS LOOPOUT%d\n",++OutCnt);
+				fprintf(fp,"GOFALSE LOOPOUT%d\n",OutCnt);
 			}
-			if(IfElseCnt>-1&&Cnt==IfElseCnt){
-				fprintf(fp,"GOFALSE ELSE%d\n",IfElseCnt);//0
+			else if(IfElseCnt>-1&&ElseCnt!=IfElseCnt){
+				fprintf(fp,"COPY\n");
+				fprintf(fp,"GOPLUS ELSE%d\n",++ElseCnt);
+				fprintf(fp,"GOFALSE ELSE%d\n",ElseCnt);//0
 			}
-			//fprintf(fp,"GOFALSE ELSE%d\n",ElseCnt);
-			IfElseCnt++;
-			IfCnt++;
-			
-			if(IfCnt>-1&&Cnt!=IfCnt&&Cnt>-1)
-				fprintf(fp,"GOFALSE OUT%d\n",++setCnt);
+			else if(IfCnt>-1&&IfCnt!=setCnt){
+				fprintf(fp,"COPY\n");
+				fprintf(fp,"GOPLUS OUT%d\n",++setCnt);
+				fprintf(fp,"GOFALSE OUT%d\n",setCnt);
+			}
 			break;
 		case GE: //크거나 같다.
 
-			if(ptr->son->token==NUM&&ptr->brother->token==NUM)
-				fprintf(fp,"PUSH %d\n",ptr->son->tokenval>=ptr->brother->tokenval);
-			else if(ptr->son->token!=NUM&&ptr->brother->token==NUM)
-				fprintf(fp,"PUSH %d\n",symtbl[ptr->son->tokenval]>=ptr->brother->tokenval);
-			else if(ptr->son->token==NUM&&ptr->brother->token!=NUM)
-				fprintf(fp,"PUSH %d\n",ptr->son->tokenval>=symtbl[ptr->brother->tokenval]);
-			else
-				fprintf(fp,"PUSH %d\n",symtbl[ptr->son->tokenval]>=symtbl[ptr->brother->tokenval]);
+			fprintf(fp,"-\n");
+			if(WhileCnt>-1&&WhileCnt!=OutCnt&&LoopCnt>-1){
+				fprintf(fp,"COPY\n");
+				fprintf(fp,"GOPLUS LOOPOUT%d\n",++OutCnt);
+			}
+			else if(IfElseCnt>-1&&ElseCnt!=IfElseCnt){
+				fprintf(fp,"COPY\n");
+				fprintf(fp,"GOPLUS ELSE%d\n",++ElseCnt);
+			}
+			else if(IfCnt>-1&&IfCnt!=setCnt){
+				fprintf(fp,"COPY\n");
+				fprintf(fp,"GOPLUS OUT%d\n",++setCnt);
+			}
 			break; 
 		case LE: //작거나 같다
-			
-			if(ptr->son->token==NUM&&ptr->brother->token==NUM)
-				fprintf(fp,"PUSH %d\n",ptr->son->tokenval<=ptr->brother->tokenval);
-			else if(ptr->son->token!=NUM&&ptr->brother->token==NUM)
-				fprintf(fp,"PUSH %d\n",symtbl[ptr->son->tokenval]<=ptr->brother->tokenval);
-			else if(ptr->son->token==NUM&&ptr->brother->token!=NUM)
-				fprintf(fp,"PUSH %d\n",ptr->son->tokenval<=symtbl[ptr->brother->tokenval]);
-			else
-				fprintf(fp,"PUSH %d\n",symtbl[ptr->son->tokenval]<=symtbl[ptr->brother->tokenval]);
+
+			fprintf(fp,"-\n");
+			if(WhileCnt>-1&&WhileCnt!=OutCnt&&LoopCnt>-1){
+				fprintf(fp,"COPY\n");
+				fprintf(fp,"GOPLUS LOOPOUT%d\n",++OutCnt);
+			}
+			else if(IfElseCnt>-1&&ElseCnt!=IfElseCnt){
+				fprintf(fp,"COPY\n");
+				fprintf(fp,"GOPLUS ELSE%d\n",++ElseCnt);
+			}
+			else if(IfCnt>-1&&IfCnt!=setCnt){
+				fprintf(fp,"COPY\n");
+				fprintf(fp,"GOPLUS OUT%d\n",++setCnt);
+			}
 			break;
 		case EQ:
 
-			if(ptr->son->token==NUM&&ptr->brother->token==NUM)
-				fprintf(fp,"PUSH %d\n",ptr->son->tokenval==ptr->brother->tokenval);
-			else if(ptr->son->token!=NUM&&ptr->brother->token==NUM)
-				fprintf(fp,"PUSH %d\n",symtbl[ptr->son->tokenval]==ptr->brother->tokenval);
-			else if(ptr->son->token==NUM&&ptr->brother->token!=NUM)
-				fprintf(fp,"PUSH %d\n",ptr->son->tokenval==symtbl[ptr->brother->tokenval]);
-			else
-				fprintf(fp,"PUSH %d\n",symtbl[ptr->son->tokenval]==symtbl[ptr->brother->tokenval]);
+			fprintf(fp,"-\n");
+			if(WhileCnt>-1&&WhileCnt!=OutCnt&&LoopCnt>-1){
+				fprintf(fp,"COPY\n");
+				fprintf(fp,"GOTRUE LOOPOUT%d\n",++OutCnt);
+			}
+			else if(IfElseCnt>-1&&ElseCnt!=IfElseCnt){
+				fprintf(fp,"COPY\n");
+				fprintf(fp,"GOTRUE ELSE%d\n",++ElseCnt);
+			}
+			else if(IfCnt>-1&&IfCnt!=setCnt){
+				fprintf(fp,"COPY\n");
+				fprintf(fp,"GOTRUE OUT%d\n",++setCnt);
+			}
 			break;
+		//NQ도 해야함
 	}
 
 }
@@ -1941,9 +2041,11 @@ void processCondition(int token,Node *ptr){
 void processStatement(Node *ptr){
 
 	switch(ptr->token){
-		case IF:
-		case IF_ELSE_ST:
-			fprintf(fp,"LABEL OUT%d\n",++desCnt);
+		case IF: //LABEL OUT%d - setCnt 
+			fprintf(fp,"LABEL OUT%d\n",setCnt);
+			break;
+		case IF_ELSE_ST: //LABEL OUT%d -Cnt 
+			fprintf(fp,"LABEL OUT%d\n",ElseCnt);
 			break;
 		case WHILE:
 			fprintf(fp,"GOTO LOOP%d\n",WhileCnt);
@@ -1968,6 +2070,8 @@ void prtcode(int token,Node *ptr)
 		case MUL:
 		case DIV:
 		case MOD:
+		case LEFT:
+		case RIGHT:
 			processOperator(token,ptr);
 			break;
 		case GT: case LT: case LE: case GE: case EQ:
@@ -1978,17 +2082,15 @@ void prtcode(int token,Node *ptr)
 			break;	
 		case ASSGN:
 			fprintf(fp,":=\n");
-
-			if(WhileCnt>-1&&LoopCnt!=WhileCnt){
+			desCnt++;
+			if(WhileCnt>-1&&LoopCnt!=WhileCnt&&desCnt==checkStmt){
 				fprintf(fp,"LABEL LOOP%d\n",++LoopCnt);
 			}
-			if(IfElseCnt>-1&&IfCnt>-1&&Cnt>-1){
-				fprintf(fp,"GOTO OUT%d\n",setCnt);
-				IfCnt=-1;
+			if(IfElseCnt>-1&&ElseCnt>-1&&Cnt!=ElseCnt){
+				fprintf(fp,"GOTO OUT%d\n",ElseCnt);
+				fprintf(fp,"LABEL ELSE%d\n",ElseCnt);
+				Cnt++;
 			}
-			
-			if(IfElseCnt>-1&&ElseCnt!=IfElseCnt&&ElseCnt!=Cnt)
-				fprintf(fp,"LABEL ELSE%d\n",++ElseCnt);
 			break;
 		case STMTLIST:
 		default:

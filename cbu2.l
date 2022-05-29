@@ -35,17 +35,22 @@ id		{letter}({letter}|{digit})*
 자박다바	{return(LT); }
 자박거버나바가밭다바 {return (LE);}
 가밭다바	{return (EQ);}
+아반가밭다바	{return (NQ);}
 
 마반야뱍에베	{return (IF);}
 마반야뱍에베또보느븐 {return (IF_ELSE_ST);} 
 아반니비라바며변 {return (ELSE);}
 바반보복	{return (WHILE);}
 
-이빕려벽	{ return (INPUT);}
+"("		{return (LPAR);}
+")"		{return (RPAR);}
+"<<"		{return (LEFT); } //고칠예정
+">>"		{return (RIGHT); } //RIGHT
 :=		{return(ASSGN); }
 ;		{return(STMTEND); }
 시비자박		{return(START); }
 끄븥		{return(END); }
+
 {id}	{strcpy(s, yytext); temp=insertsym(s); yylval=MakeNode(ID,temp); return(ID);}
 {digit}+		{sscanf(yytext, "%d", &temp); yylval=MakeNode(NUM,temp); return(NUM);}
 .		{printf("invalid token %s\n", yytext); }
