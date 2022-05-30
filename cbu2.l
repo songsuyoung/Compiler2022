@@ -42,6 +42,8 @@ id		{letter}({letter}|{digit})*
 아반니비라바며변 {return (ELSE);}
 바반보복	{return (WHILE);}
 
+"{"		{return (LBRACE);}
+"}"		{return (RBRACE);}
 "("		{return (LPAR);}
 ")"		{return (RPAR);}
 "<<"		{return (LEFT); } //고칠예정
