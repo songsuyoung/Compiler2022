@@ -418,6 +418,19 @@ void processCondition(int token,Node *ptr){
 				fprintf(fp,"GOTRUE OUT%d\n",++setCnt);
 			}
 			break;
+
+		case NQ:
+			fprintf(fp,"-\n");
+			if(WhileCnt>-1&&WhileCnt!=OutCnt&&LoopCnt>-1){
+				fprintf(fp,"GOFALSE LOOPOUT%d\n",++OutCnt);
+			}
+			else if(IfElseCnt>-1&&ElseCnt!=IfElseCnt){
+				fprintf(fp,"GOFALSE ELSE%d\n",++ElseCnt);
+			}
+			else if(IfCnt>-1&&IfCnt!=setCnt){
+				fprintf(fp,"GOFALSE OUT%d\n",++setCnt);
+			}
+			break;
 		//NQ도 해야함
 	}
 
@@ -427,10 +440,10 @@ void processStatement(Node *ptr){
 
 	switch(ptr->token){
 		case IF: //LABEL OUT%d - setCnt 
-			fprintf(fp,"LABEL OUT%d\n",setCnt);
+				fprintf(fp,"LABEL OUT%d\n",setCnt);
 			break;
 		case IF_ELSE_ST: //LABEL OUT%d -Cnt 
-			fprintf(fp,"LABEL OUT%d\n",ElseCnt);
+			fprintf(fp,"LABEL IFELSEOUT%d\n",ElseCnt);
 			break;
 		case WHILE:
 			fprintf(fp,"GOTO LOOP%d\n",WhileCnt);
@@ -459,7 +472,7 @@ void prtcode(int token,Node *ptr)
 		case RIGHT:
 			processOperator(token,ptr);
 			break;
-		case GT: case LT: case LE: case GE: case EQ:
+		case GT: case LT: case LE: case GE: case EQ: case NQ:
 			processCondition(token,ptr);
 			break;
 		case IF:case IF_ELSE_ST:case WHILE:
@@ -474,7 +487,7 @@ void prtcode(int token,Node *ptr)
 			}
 
 			if(IfElseCnt>-1&&ElseCnt>-1&&Cnt!=ElseCnt){
-				fprintf(fp,"GOTO OUT%d\n",ElseCnt);
+				fprintf(fp,"GOTO IFELSEOUT%d\n",ElseCnt);
 				fprintf(fp,"LABEL ELSE%d\n",ElseCnt);
 				Cnt++;
 			}
